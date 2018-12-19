@@ -1,0 +1,133 @@
+搭建kafka伪集群
+
+# 必要条件
+安装jdk
+安装zookeeper
+
+
+# 下载 kafka_2.12-2.1.0.tgz 到安装目录，解压
+tar -zxvf kafka_2.12-2.1.0.tgz
+
+# 创建配置文件
+cd /opt/kafka_2.12-2.1.0/config
+cp server.properties server-1.properties
+cp server.properties server-2.properties
+
+
+# 修改配置文件
+[root@zcheck-6 config]# cat server.properties |grep -Ev '^$|^#'
+broker.id=1    # modify
+num.network.threads=3
+num.io.threads=8
+socket.send.buffer.bytes=102400
+socket.receive.buffer.bytes=102400
+socket.request.max.bytes=104857600
+log.dirs=/opt/kafka-logs    # modify
+num.partitions=1
+num.recovery.threads.per.data.dir=1
+offsets.topic.replication.factor=1
+transaction.state.log.replication.factor=1
+transaction.state.log.min.isr=1
+log.retention.hours=168
+log.segment.bytes=1073741824
+log.retention.check.interval.ms=300000
+zookeeper.connect=your_ip:2181,your_ip:2182,your_ip:2183    # modify
+zookeeper.connection.timeout.ms=6000
+group.initial.rebalance.delay.ms=0
+[root@zcheck-6 config]#
+
+
+[root@zcheck-6 config]# cat server-1.properties |grep -Ev '^$|^#'
+broker.id=2    # modify
+port=9093    # modify
+num.network.threads=3
+num.io.threads=8
+socket.send.buffer.bytes=102400
+socket.receive.buffer.bytes=102400
+socket.request.max.bytes=104857600
+log.dirs=/opt/kafka-logs-1    # modify
+num.partitions=1
+num.recovery.threads.per.data.dir=1
+offsets.topic.replication.factor=1
+transaction.state.log.replication.factor=1
+transaction.state.log.min.isr=1
+log.retention.hours=168
+log.segment.bytes=1073741824
+log.retention.check.interval.ms=300000
+zookeeper.connect=your_ip:2181,your_ip:2182,your_ip:2183    # modify
+zookeeper.connection.timeout.ms=6000
+group.initial.rebalance.delay.ms=0
+[root@zcheck-6 config]#
+
+[root@zcheck-6 config]# cat server-2.properties |grep -Ev '^$|^#'
+broker.id=3    ## modify
+port=9094    ## modify
+num.network.threads=3
+num.io.threads=8
+socket.send.buffer.bytes=102400
+socket.receive.buffer.bytes=102400
+socket.request.max.bytes=104857600
+log.dirs=/opt/kafka-logs-2    ## modify
+num.partitions=1
+num.recovery.threads.per.data.dir=1
+offsets.topic.replication.factor=1
+transaction.state.log.replication.factor=1
+transaction.state.log.min.isr=1
+log.retention.hours=168
+log.segment.bytes=1073741824
+log.retention.check.interval.ms=300000
+zookeeper.connect=your_ip:2181,your_ip:2182,your_ip:2183    ## modify
+zookeeper.connection.timeout.ms=6000
+group.initial.rebalance.delay.ms=0
+[root@zcheck-6 config]#
+
+# 创建目录
+mkdir -p /opt/kafka-logs
+mkdir -p /opt/kafka-logs-1
+mkdir -p /opt/kafka-logs-2
+
+
+# 启动
+cd /opt/kafka_2.12-2.1.0/bin
+./kafka-server-start.sh -daemon ../config/server.properties
+./kafka-server-start.sh -daemon ../config/server-1.properties
+./kafka-server-start.sh -daemon ../config/server-2.properties
+
+# 端口监听
+tcp6       0      0 :::9092                 :::*                    LISTEN      28143/java
+tcp6       0      0 :::9093                 :::*                    LISTEN      29526/java
+tcp6       0      0 :::9094                 :::*                    LISTEN      31763/java
+
+# zookeeper中查看集群状态
+[zk: your_ip:2182(CONNECTED) 4] ls /brokers/ids
+[1, 2, 3]	## 显示的是kafka中的 broker.id
+[zk: your_ip:2182(CONNECTED) 5] get /brokers/ids/1
+{"listener_security_protocol_map":{"PLAINTEXT":"PLAINTEXT"},"endpoints":["PLAINTEXT://zcheck-6:9092"],"jmx_port":-1,"host":"zcheck-6","timestamp":"1545168462823","port":9092,"version":4}
+cZxid = 0x10000004f
+ctime = Wed Dec 19 05:27:42 CST 2018
+mZxid = 0x10000004f
+mtime = Wed Dec 19 05:27:42 CST 2018
+pZxid = 0x10000004f
+cversion = 0
+dataVersion = 0
+aclVersion = 0
+ephemeralOwner = 0x367c30cc1550000
+dataLength = 186
+numChildren = 0
+[zk: your_ip:2182(CONNECTED) 6]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
