@@ -1,0 +1,86 @@
+搭建zookeeper伪集群
+
+# 下载zookeeper-3.4.10.tar.gz 到安装目录，解压
+tar -zxvf zookeeper-3.4.10.tar.gz
+
+# 创建配置文件
+cd /opt/zookeeper-3.4.10/conf
+cp zoo_sample.cfg zoo1.cfg
+cp zoo_sample.cfg zoo2.cfg
+cp zoo_sample.cfg zoo3.cfg
+
+# 修改配置文件
+[root@zcheck-6 conf]# cat zoo1.cfg 
+tickTime=2000
+initLimit=10
+syncLimit=5
+dataDir=/opt/zookeeper/zk1/data
+clientPort=2181
+dataLogDir=/opt/zookeeper/zk1/logs
+
+server.1=localhost:2888:3888
+server.2=localhost:2889:3889
+server.3=localhost:2890:3890
+
+[root@zcheck-6 conf]# cat zoo2.cfg 
+tickTime=2000
+initLimit=10
+syncLimit=5
+dataDir=/opt/zookeeper/zk2/data
+clientPort=2182
+dataLogDir=/opt/zookeeper/zk2/logs
+
+server.1=localhost:2888:3888
+server.2=localhost:2889:3889
+server.3=localhost:2890:3890
+
+[root@zcheck-6 conf]# cat zoo3.cfg 
+tickTime=2000
+initLimit=10
+syncLimit=5
+dataDir=/opt/zookeeper/zk3/data
+clientPort=2183
+dataLogDir=/opt/zookeeper/zk3/logs
+
+server.1=localhost:2888:3888
+server.2=localhost:2889:3889
+server.3=localhost:2890:3890
+
+# 创建目录
+mkdir -p /opt/zookeeper/zk1/{data,logs}
+mkdir -p /opt/zookeeper/zk2/{data,logs}
+mkdir -p /opt/zookeeper/zk3/{data,logs}
+
+# 启动
+cd /opt/zookeeper-3.4.10/bin
+./zkServer.sh start ../conf/zoo1.cfg
+./zkServer.sh start ../conf/zoo2.cfg
+./zkServer.sh start ../conf/zoo3.cfg
+
+# 查看状态
+cd /opt/zookeeper-3.4.10/bin
+[root@zcheck-6 bin]# ./zkServer.sh status ../conf/zoo1.cfg
+ZooKeeper JMX enabled by default
+Using config: ../conf/zoo1.cfg
+Mode: follower
+[root@zcheck-6 bin]# ./zkServer.sh status ../conf/zoo2.cfg
+ZooKeeper JMX enabled by default
+Using config: ../conf/zoo2.cfg
+Mode: leader
+[root@zcheck-6 bin]# ./zkServer.sh status ../conf/zoo3.cfg
+ZooKeeper JMX enabled by default
+Using config: ../conf/zoo3.cfg
+Mode: follower
+[root@zcheck-6 bin]#
+
+
+
+
+
+
+
+
+
+
+
+
