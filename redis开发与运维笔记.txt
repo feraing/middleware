@@ -1,0 +1,82 @@
+1.1 盛赞redis
+
+	# redis 基于key-value的NoSQL数据库
+	# 数据结构：string、hash、list、set、zset（主要数据）
+	# 数据结构： Bitmaps（位图）、HyperLogLog、GEO（地理信息定位） 
+	# 所有数据存放在内存中，读写性能很快
+	
+	# 速度快：10w/s 【数据在内存中、C语言实现、单线程架构】
+	# 键值对的数据结构
+	# 键过期 --- 实现缓存
+	# 发布订阅 --- 实现消息系统
+	# 支持Lua --- 利用Lua创造新的redis命令
+	# 提供简单的事务功能 --- 保证事务特性
+	# 流水线功能 --- 一批命令一次性传到redis
+	# 内存 ---> 磁盘 ：RDB AOF
+	
+	# 适用场景：缓存、排行榜系统、计数器应用、社交网络、消息队列系统
+	
+	# 安装
+	# 1 下载指定版本的源码包到当前目录
+	# 2 解压源码包
+	# 3 建立redis目录的软连接指向解压目录（有利于未来版本升级）
+	# 4 进入redis目录
+	# 5 编译
+	# 6 安装（redis的相关运行文件【Redis Shell】放到 /usr/local/bin/ 下，任意目录下执行可执行redis命令）
+	
+	# Redis Shell
+	# redis-server 启动redis
+	# redis-cli 命令行客户端
+	# redis-benchmark 基准测试工具
+	# redis-check-aof AOF持久化文件检测和修复工具
+	# redis-check-dump RDB持久化文件检测和修复工具
+	# redis-sentinel 启动sentinel
+	
+	# 启动
+	# 默认配置： redis-server
+	# 运行启动： redis-server --port 6380
+	# 配置文件启动： redis-server /opt/redis/redis.conf 【生产环境推荐】
+	
+	# 停止
+	# redis-cli shutdown
+	# 过程：断开与客户端的连接、持久化文件生成，优雅的关闭方式
+	# shutdown nosave|save ：是否生成持久化文件
+	
+	# 重要基础配置
+	# port 端口
+	# logfile 日志文件
+	# dir 工作目录【存放持久化文件和日志文件】
+	# daemonize 是否以守护进程的方式启动
+	
+	# 命令行客户端： 默认127.0.0.1，端口6379【无参数时】
+	# 交互式方式： redis-cli -h {host} -p {port}
+	# 命令方式：  redis-cli -h {host} -p {port} {command}
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
