@@ -1,0 +1,28 @@
+location / {
+            root   /opt/nginx/html;
+            index  index.html index.htm;
+}
+
+# 根路径：html文件放置在/opt/nginx/html 目录下，页面访问时也是在此目录下找文件，找不到则报：404 not found
+
+error_page  404              /404.html;
+location = /404.html {
+            root /opt/nginx/error;
+}
+# 定义404页面，404相关页面存放在/opt/nginx/error 目录下
+
+location ^~ /notfound.png {
+            root /opt/nginx/error;
+}
+# 由于在 /opt/nginx/error 目录下的404.html文件中有图片配置，此处需要根据规则调整，否则页面无法加载图片
+# 默认访问 127.0.0.1/notfound.png ,其实是在 /opt/nginx/html 目录下寻找notfound.png
+# 添加规则后，则在 /opt/nginx/error 目录下寻找notfound.png ，此时页面图片加载正常
+
+404.html
+...
+<div class="errorpPage-img">
+                    <img src="/notfound.png">
+</div>
+ ...
+ 
+ 
