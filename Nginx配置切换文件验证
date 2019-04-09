@@ -1,0 +1,119 @@
+背景：
+nginx的/usr/local/nginx/conf/conf.d/ 目录下的文件为软连接一个配置文件
+/usr/local/nginx/conf/conf.d/base.conf -> /usr/local/nginx/conf/sites-available/A.conf
+/usr/local/nginx/conf/conf.d/base.conf -> /usr/local/nginx/conf/sites-available/B.conf
+
+需求：
+通过脚本控制，灵活切换base.conf指向A.conf，B.conf
+
+
+#!/bin/bash
+# filename:s1_switch.sh
+# switch s1 nginx conf
+# action：
+# nginx -t
+# nginx -s reload
+# 
+
+set -o nounset
+set -o errexit
+
+AAA_CONF="/usr/local/nginx/conf/sites-available/www.aaa.com"
+BBB_CONF="/usr/local/nginx/conf/sites-available/www.aaa.com_BBB"
+DEST_CONF="/usr/local/nginx/conf/conf.d/www.aaa.com.conf"
+
+
+function AAA_or_BBB(){
+    if [ "$1" = "BBB" ];then
+        front="AAA"
+        behind="BBB"
+        LN_CONF=$BBB_CONF
+    elif [ "$1" = "AAA" ];then
+        front="BBB"
+        behind="AAA"
+        LN_CONF=$AAA_CONF
+    fi
+    echo -e "\033[33mNow $front ---> $behind , Yes?\033[0m"
+    read -p "Please confirm: " confirm
+    case $confirm in
+    Yes|yes|Y|y)
+      ln -sf $LN_CONF $DEST_CONF
+      if [ $? -ne 0 ];then
+        echo -e "\033[33mexec ERROR!exit 1\033[0m"
+      else
+          # nginx -t
+          # nginx -s reload
+          #### 
+          /usr/local/nginx/sbin/nginx -t
+          if [ $? -ne 0 ];then
+              echo -e "\033[33mcheck nginx_conf ERROR, exit 1\033[0m"
+          fi
+          /usr/local/nginx/sbin/nginx -s reload
+      fi
+    ;;
+    *)
+      echo -e "Input ERROR,exit!"
+      ;;
+    esac
+}
+
+
+function output_options(){
+    echo -e "\033[33mThe purpose of this script is to switch, Be careful exec it!\033[0m\n"
+    echo -e "\033[32mCurrent s1 nginx conf is: $(ls -alh /usr/local/nginx/conf/conf.d/www.aaa.com.conf |awk '{print $NF}')\033[0m\n"
+    echo -e "-----------------------------------"
+    echo -e "       1. AAA ---> BBB"
+    echo -e "       2. BBB ---> AAA"
+    echo -e "-----------------------------------"
+    
+    read -p "Please input number(1|2):" number
+    case $number in
+      1)
+        AAA_or_BBB BBB
+        ;;
+      2)
+        AAA_or_BBB AAA
+        ;;
+      *)
+        echo -e "\033[31mInput ERROR, Please exec script again!\033[0m"
+        ;;
+    esac
+}
+
+
+output_options
+
+验证：
+
+验证：
+1、服务器验证
+A. 修改 /etc/hosts 
+127.0.0.1 www.aaa.com
+B. 请求
+curl -I 192.168.x.x
+C. 查看
+netstat -anpt |grep "10.x.x.253:80"
+netstat -anpt |grep "33333"
+
+2. 本地电脑验证
+
+A） 修改 hosts
+192.168.xxx.xxx www.aaa.com
+B） 浏览器访问 www.aaa.com
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
