@@ -1,0 +1,6 @@
+windows配置批处理脚本定时重启
+
+reboot.bat：
+C:\Windows\system32\shutdown.exe /r /f
+
+
