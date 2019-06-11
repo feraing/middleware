@@ -1,0 +1,127 @@
+sqlite3操作及granfa数据库介绍
+
+1、连接
+命令： sqlite3
+
+# 当数据库存在，则直接进入数据库中；否则创建此数据库
+# 1.1 11111.db 不存在时
+sqlite3 11111.db
+sqlite> .tables
+sqlite>
+
+# 1.2 11111.db 存在时
+sqlite3 11111.db
+sqlite> .tables
+tb1
+sqlite>
+
+2、查看数据库中包含哪些表
+
+命令： .tables
+
+SQLite version 3.7.17 2013-05-20 00:56:22
+Enter ".help" for instructions
+Enter SQL statements terminated with a ";"
+sqlite> .tables
+tb1
+sqlite>
+
+3、查看表结构
+
+命令： .schema
+
+sqlite> .schema tb1
+CREATE TABLE tb1(id int(10) ,name char(20));
+sqlite>
+
+
+4、增、删、改、查
+insert into tb1 values(3, 'Lili3');
+delete from tb1 where id = 2;
+update tb1 set name = 'LiliLili2' where id = 3;
+select * from tb1;
+
+
+granfa数据库
+
+qlite3 grafana.db 
+SQLite version 3.7.17 2013-05-20 00:56:22
+Enter ".help" for instructions
+Enter SQL statements terminated with a ";"
+sqlite>
+sqlite> .tables
+alert               dashboard_snapshot  org_user            star              
+alert_notification  dashboard_tag       playlist            tag               
+annotation          dashboard_version   playlist_item       team              
+annotation_tag      data_source         plugin_setting      team_member       
+api_key             login_attempt       preferences         temp_user         
+dashboard           migration_log       quota               test_data         
+dashboard_acl       org                 session             user              
+sqlite> 
+
+select * from alert_notification;
+
+
+select * from dashboard_snapshot;
+select * from dashboard_tag     ;
+select * from dashboard_version ;
+select * from data_source       ;
+select * from login_attempt     ;
+select * from migration_log     ;
+select * from org               ;
+
+select * from org_user        ;
+select * from playlist        ;
+select * from playlist_item   ;
+select * from plugin_setting  ;
+select * from preferences     ;
+select * from quota           ;
+select * from session         ;
+
+
+select * from star            ;
+select * from tag             ;
+select * from team            ;
+select * from team_member     ;
+select * from temp_user       ;
+select * from test_data       ;
+select * from user            ;
+
+
+
+select * from alert_notification;
+select * from annotation;
+select * from annotation_tag;
+select * from api_key;
+select * from dashboard;
+select * from dashboard_acl;
+select * from alert;
+select * from 
+
+sqlite> .schema alert
+CREATE TABLE `alert` (
+`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL
+, `version` INTEGER NOT NULL
+, `dashboard_id` INTEGER NOT NULL
+, `panel_id` INTEGER NOT NULL
+, `org_id` INTEGER NOT NULL
+, `name` TEXT NOT NULL
+, `message` TEXT NOT NULL
+, `state` TEXT NOT NULL
+, `settings` TEXT NOT NULL
+, `frequency` INTEGER NOT NULL
+, `handler` INTEGER NOT NULL
+, `severity` TEXT NOT NULL
+, `silenced` INTEGER NOT NULL
+, `execution_error` TEXT NOT NULL
+, `eval_data` TEXT NULL
+, `eval_date` DATETIME NULL
+, `new_state_date` DATETIME NOT NULL
+, `state_changes` INTEGER NOT NULL
+, `created` DATETIME NOT NULL
+, `updated` DATETIME NOT NULL
+);
+CREATE INDEX `IDX_alert_org_id_id` ON `alert` (`org_id`,`id`);
+CREATE INDEX `IDX_alert_state` ON `alert` (`state`);
+CREATE INDEX `IDX_alert_dashboard_id` ON `alert` (`dashboard_id`);
+sqlite>
