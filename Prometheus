@@ -1,0 +1,149 @@
+wget https://github.com/prometheus/prometheus/releases/download/v2.3.2/prometheus-2.3.2.linux-amd64.tar.gz
+
+tar -zxvf prometheus-2.3.2.linux-amd64.tar.gz
+cp prometheus-2.3.2.linux-amd64/prometheus /usr/local/bin/
+cp prometheus-2.3.2.linux-amd64/promtool /usr/local/bin/
+
+
+# 验证是否安装成功
+prometheus --version
+
+
+3.2 配置prometheus
+vim prometheus.yml
+global:
+# prometheus 全局配置
+  scrape_interval:     15s
+  # 抓取数据的时间间隔
+  # 特定位置收集指标可以覆盖
+  # 不建议覆盖：会产生不和逻辑的结果
+  evaluation_interval: 15s
+  # 指定 prometheus 评估规则的频率
+  # prometheus 每15s 评估规则
+  # 规则： 记录规则， 警报规则
+  # 记录规则：允许预先计算使用频率且开销大的表达式，并将结果保存为一个新的时间序列数据
+  # 警报规则：允许定义警报条件
+
+alerting:
+# prometheus 警报
+  alertmanagers:
+  - static_configs:
+    - targets:
+      # - alertmanager:9093
+
+rule_files:
+# 指定包含记录规则和警报规则的文件列表
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+# 用来指定prometheus抓取的所有目标
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+      # 从本地9090端口抓取数据并返回服务器的健康指标
+      # 抓取的指标将返回到 /metrics 路径下，此指标路径可以被覆盖
+
+
+3.3 启动prometheus
+mkdir -p /etc/prometheus
+cp prometheus.yml /etc/prometheus/
+prometheus --config-file "/etc/prometheus/prometheus.yml"
+
+
+# 验证配置文件
+promtool check config prometheus.yml
+
+
+3.4 第一个指标
+浏览器访问
+http://localhost:9090/metrics
+
+
+3.5 表达式浏览器
+# 浏览器访问
+http://localhost:9090/graph
+
+go_gc_duration_seconds(instance="localhost:9090", job="prometheus", quantile="0.5")
+# instance 抓取指标的目标
+# job 抓取指标的作业名称
+# quantile="0.5" 表示这衡量的是第50百分位数，后面的数字是这个指标的值
+
+# prometheus 在服务器内置了 PromQL 高度灵活的表达式语言，允许查询和聚合指标
+
+# PromQL 查询语言中的表达式可以返回四种数据类型
+# 1 即时向量 instnat vector
+# 一组包含每个时间序列的单个样本的时间序列集合，其中所有时间序列都共享相同的时间戳
+2 范围向量 range vector
+# 包含一组时间序列，其中每个时间序列都包含一系列数据点
+# 允许显示该时间段的时间序列，持续时间被包含在中括号[]中
+# 内容是一个整数值+单位缩写
+# s 秒，m 分钟， h 小时， d 天， w 周
+
+3 数字浮点值 Scalars
+4 字符串值 Strings
+
+# 查询1
+    go_gc_duration_seconds(quantile="0.75")
+    # 等于0.75的指标的即时向量
+# 支持正则表达式过滤或匹配
+    go_gc_duration_seconds(quantile!="0.75")
+    # 不等于0.75的指标的即时向量
+
+# 查询2
+    prometheus_build_info
+    # prometheus服务器的构建信息
+    # 可以看到此指标使用了大量的标签，并且指标的值为1
+    # 这是通过指标将信息传递到prometheus服务器的常见模式，使用恒定值为1 的指标
+
+3.6 聚合时间序列
+# 查询3
+    promhttp_metric_handler_requests_total
+    # prometheus服务器中抓取数据所产生的HTTP请求总数
+    sum(promhttp_metric_handler_requests_total)
+    # 汇总HTTP请求，对所有请求进行累加
+    sum(promhttp_metric_handler_requests_total) by (job)
+    # 根据特定的标签维度进行聚合
+    # without 不按特定维度进行聚合
+    sum(rate(promhttp_metric_handler_requests_total[5m])) by (job)
+    # rate 用来计算一定范围内时间序列的每秒平均增长率，只能与计数器一起使用
+    # rate 适合用于增长较慢的计数器或用于警报的场景
+    # irate 计算增长较快的计时器的瞬时增长率
+    
+
+3.7 容量规划
+prometheus性能取决： 配置、所收集的时间序列的数量以及服务器上的规则的复杂性
+容量规划关注两个问题： 内存+磁盘
+
+粗略的经验法则： 每秒采集的样本数乘以样本大小
+rate(prometheus_tsdb_head_samples_appended_total[1m])
+# 最后一分钟添加到数据库的每秒样本率
+sum(count by (__name__)({__name__=\~"\.\+"}))
+# 所有匹配的指标的计数和，使用=~运算符和.+的正则表达式来匹配所有指标
+样本大小在1-2字节，按照2个字节，假设12小时内每秒收集100000个样本
+内存使用情况：
+100000*2 bytes * 43200 seconds = 8.64GB
+
+# 此外还有查询和记录规则方面的内存
+
+process_resident_memory_bytes
+# prometheus 进程的内存使用情况
+
+
+磁盘： 存储的时间序列数量和时间序列的保留时间限制
+默认指标会在本地时间序列数据库中存储15days
+
+--storage.tsdb.path
+# 默认数据目录位于运行prometheus的目录中，用于控制时间序列数据库位置
+
+--storage.tsdb.retention
+# 控制时间序列的保留期，默认值为15d，即15天
+
+建议： 采用SSD作为时间序列数据库的磁盘
+
+100000 个/s 样本 * 2 bytes * 15days = 259GB
+
+
+
+
+
